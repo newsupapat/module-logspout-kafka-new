@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gliderlabs/logspout/router"
-	"gopkg.in/Shopify/sarama.v1"
+	sarama "gopkg.in/Shopify/sarama.v1"
 )
 
 func init() {
@@ -77,8 +77,9 @@ func (a *KafkaAdapter) Stream(logstream chan *router.Message) {
 			a.route.Close()
 			break
 		}
-
-		a.producer.Input() <- message
+		if message != nil {
+			a.producer.Input() <- message
+		}
 	}
 }
 
@@ -118,8 +119,8 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 		}
 	}
 
-	tags := GetContainerTags(m.Container, a)
-	fields := GetLogstashFields(m.Container, a)
+	// tags := GetContainerTags(m.Container, a)
+	// fields := GetLogstashFields(m.Container, a)
 
 	var js []byte
 	var data map[string]interface{}
@@ -127,27 +128,15 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 
 	// Try to parse JSON-encoded m.Data. If it wasn't JSON, create an empty object
 	// and use the original data as the message.
-	if IsDecodeJsonLogs(m.Container, a) {
-		err = json.Unmarshal([]byte(m.Data), &data)
-	}
-	if err != nil || data == nil {
-		data = make(map[string]interface{})
-		data["message"] = m.Data
-	}
-
-	for k, v := range fields {
-		data[k] = v
-	}
-
+	data["message"] = m.Data
 	data["docker"] = dockerInfo
 	data["stream"] = m.Source
-	data["tags"] = tags
 
 	// Return the JSON encoding
 	if js, err = json.Marshal(data); err != nil {
 		// Log error message and continue parsing next line, if marshalling fails
 		log.Println("logstash: could not marshal JSON:", err)
-		return
+		return nil, nil
 	}
 	js = append(js, byte('\n'))
 
@@ -158,6 +147,7 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 		Value: encoder,
 	}, nil
 }
+
 func readBrokers(address string) []string {
 	if strings.Contains(address, "/") {
 		slash := strings.Index(address, "/")
@@ -185,4 +175,12 @@ func errorf(format string, a ...interface{}) (err error) {
 		fmt.Println(err.Error())
 	}
 	return
+}
+
+type DockerInfo struct {
+	Name     string            `json:"name"`
+	ID       string            `json:"id"`
+	Image    string            `json:"image"`
+	Hostname string            `json:"hostname"`
+	Labels   map[string]string `json:"labels"`
 }
