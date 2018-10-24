@@ -147,7 +147,7 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 	if js, err = json.Marshal(data); err != nil {
 		// Log error message and continue parsing next line, if marshalling fails
 		log.Println("logstash: could not marshal JSON:", err)
-		continue
+		return
 	}
 	js = append(js, byte('\n'))
 
