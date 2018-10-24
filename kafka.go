@@ -126,8 +126,7 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 	var data map[string]interface{}
 	var err error
 
-	// Try to parse JSON-encoded m.Data. If it wasn't JSON, create an empty object
-	// and use the original data as the message.
+	data = make(map[string]interface{})
 	data["message"] = m.Data
 	data["docker"] = dockerInfo
 	data["stream"] = m.Source
