@@ -23,7 +23,6 @@ type KafkaAdapter struct {
 	brokers  []string
 	topic    string
 	producer sarama.AsyncProducer
-	tmpl     *template.Template
 }
 
 func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
@@ -38,14 +37,6 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 	}
 
 	var err error
-	var tmpl *template.Template
-	if text := os.Getenv("KAFKA_TEMPLATE"); text != "" {
-		tmpl, err = template.New("kafka").Parse(text)
-		if err != nil {
-			return nil, errorf("Couldn't parse Kafka message template. %v", err)
-		}
-	}
-
 	if os.Getenv("DEBUG") != "" {
 		log.Printf("Starting Kafka producer for address: %s, topic: %s.\n", brokers, topic)
 	}
@@ -75,7 +66,6 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 		brokers:  brokers,
 		topic:    topic,
 		producer: producer,
-		tmpl:     tmpl,
 	}, nil
 }
 
