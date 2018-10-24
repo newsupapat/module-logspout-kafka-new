@@ -1,17 +1,15 @@
 package kafka
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/gliderlabs/logspout/router"
-	"gopkg.in/Shopify/sarama.v1"
 )
 
 func init() {
@@ -152,7 +150,7 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 	}
 	js = append(js, byte('\n'))
 
-  	var encoder := sarama.StringEncoder(js)
+	encoder := sarama.StringEncoder(js)
 
 	return &sarama.ProducerMessage{
 		Topic: a.topic,
