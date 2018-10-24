@@ -113,24 +113,62 @@ func newConfig() *sarama.Config {
 	return config
 }
 
-func (a *KafkaAdapter) formatMessage(message *router.Message) (*sarama.ProducerMessage, error) {
-	var encoder sarama.Encoder
-	if a.tmpl != nil {
-		var w bytes.Buffer
-		if err := a.tmpl.Execute(&w, message); err != nil {
-			return nil, err
-		}
-		encoder = sarama.ByteEncoder(w.Bytes())
-	} else {
-		encoder = sarama.StringEncoder(message.Data)
+func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage, error) {
+
+	dockerInfo := DockerInfo{
+		Name:     m.Container.Name,
+		ID:       m.Container.ID,
+		Image:    m.Container.Config.Image,
+		Hostname: m.Container.Config.Hostname,
 	}
+
+	if os.Getenv("DOCKER_LABELS") != "" {
+		dockerInfo.Labels = make(map[string]string)
+		for label, value := range m.Container.Config.Labels {
+			dockerInfo.Labels[strings.Replace(label, ".", "_", -1)] = value
+		}
+	}
+
+	tags := GetContainerTags(m.Container, a)
+	fields := GetLogstashFields(m.Container, a)
+
+	var js []byte
+	var data map[string]interface{}
+	var err error
+
+	// Try to parse JSON-encoded m.Data. If it wasn't JSON, create an empty object
+	// and use the original data as the message.
+	if IsDecodeJsonLogs(m.Container, a) {
+		err = json.Unmarshal([]byte(m.Data), &data)
+	}
+	if err != nil || data == nil {
+		data = make(map[string]interface{})
+		data["message"] = m.Data
+	}
+
+	for k, v := range fields {
+		data[k] = v
+	}
+
+	data["docker"] = dockerInfo
+	data["stream"] = m.Source
+	data["tags"] = tags
+
+	// Return the JSON encoding
+	if js, err = json.Marshal(data); err != nil {
+		// Log error message and continue parsing next line, if marshalling fails
+		log.Println("logstash: could not marshal JSON:", err)
+		continue
+	}
+	js = append(js, byte('\n'))
+
+  	var encoder := sarama.StringEncoder(js)
 
 	return &sarama.ProducerMessage{
 		Topic: a.topic,
 		Value: encoder,
 	}, nil
 }
-
 func readBrokers(address string) []string {
 	if strings.Contains(address, "/") {
 		slash := strings.Index(address, "/")
