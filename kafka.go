@@ -78,7 +78,7 @@ func (a *KafkaAdapter) Stream(logstream chan *router.Message) {
 			break
 		}
 		if message != nil {
-			if !strings.Contains("message", "/health") {
+			if !strings.Contains(message, "/health") {
 				a.producer.Input() <- message
 			}
 
