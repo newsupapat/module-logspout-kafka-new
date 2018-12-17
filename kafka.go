@@ -78,7 +78,10 @@ func (a *KafkaAdapter) Stream(logstream chan *router.Message) {
 			break
 		}
 		if message != nil {
-			a.producer.Input() <- message
+			if !strings.Contains("message", "/health") {
+				a.producer.Input() <- message
+			}
+
 		}
 	}
 }
@@ -127,7 +130,13 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 	var err error
 
 	data = make(map[string]interface{})
-	data["message"] = m.Data
+	// Return the JSON encoding
+	if data["message"], err = json.Marshal(m.Data); err != nil {
+		// Log error message and continue parsing next line, if marshalling fails
+		log.Println("logsput: could not marshal JSON:", err)
+		return m.Data
+	}
+	//data["message"] = m.Data
 	data["docker"] = dockerInfo
 	data["stream"] = m.Source
 
