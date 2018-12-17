@@ -134,7 +134,7 @@ func (a *KafkaAdapter) formatMessage(m *router.Message) (*sarama.ProducerMessage
 	if data["message"], err = json.Marshal(m.Data); err != nil {
 		// Log error message and continue parsing next line, if marshalling fails
 		log.Println("logsput: could not marshal JSON:", err)
-		return m.Data
+		return m.Data, nil
 	}
 	//data["message"] = m.Data
 	data["docker"] = dockerInfo
