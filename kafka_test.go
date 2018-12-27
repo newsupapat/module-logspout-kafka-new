@@ -1,9 +1,11 @@
 package kafka
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 var noopts = map[string]string{}
-
 
 func Test_read_route_address(t *testing.T) {
 	address := "broker1:9092,broker2:9092"
@@ -16,6 +18,27 @@ func Test_read_route_address(t *testing.T) {
 	}
 	if brokers[1] != "broker2:9092" {
 		t.Errorf("broker2 addr should not be %s", brokers[1])
+	}
+}
+
+func Test_ignore_health_message(t *testing.T) {
+	os.Unsetenv("KAFKA_IGNORE_MESSAGE_CONTAINS")
+	if filterMessage("/hello/health") {
+		t.Fatal("message should not be ignored")
+	}
+
+	os.Setenv("KAFKA_IGNORE_MESSAGE_CONTAINS", "/health,/test")
+	if !filterMessage("/hello/health?random") {
+		t.Fatal("message should be ignored")
+	}
+	if !filterMessage("/test?random") {
+		t.Fatal("message should be ignored")
+	}
+	if filterMessage("/hello/info?random") {
+		t.Fatal("message should not be ignored")
+	}
+	if filterMessage("") {
+		t.Fatal("message should not be ignored")
 	}
 }
 

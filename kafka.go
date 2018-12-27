@@ -68,9 +68,25 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 	}, nil
 }
 
+func filterMessage(str string) bool {
+	if messageFilters := os.Getenv("KAFKA_IGNORE_MESSAGE_CONTAINS"); messageFilters != "" {
+		for _, messageFilter := range strings.Split(messageFilters, ",") {
+			if messageFilter != "" && strings.Contains(str, messageFilter) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (a *KafkaAdapter) Stream(logstream chan *router.Message) {
 	defer a.producer.Close()
 	for rm := range logstream {
+
+		if filterMessage(rm.Data) {
+			continue
+		}
+
 		message, err := a.formatMessage(rm)
 		if err != nil {
 			log.Println("kafka:", err)
