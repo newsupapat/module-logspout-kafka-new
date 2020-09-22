@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/gliderlabs/logspout/router"
-	sarama "gopkg.in/Shopify/sarama.v1"
 )
 
 func init() {
@@ -47,7 +47,12 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 	}
 	var producer sarama.AsyncProducer
 	for i := 0; i < retries; i++ {
-		producer, err = sarama.NewAsyncProducer(brokers, newConfig())
+		config := newConfig()
+		if route.Options != nil {
+			loadOptions(config, route.Options)
+		}
+
+		producer, err = sarama.NewAsyncProducer(brokers, config)
 		if err != nil {
 			if os.Getenv("DEBUG") != "" {
 				log.Println("Couldn't create Kafka producer. Retrying...", err)
