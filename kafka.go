@@ -49,7 +49,10 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 	for i := 0; i < retries; i++ {
 		config := newConfig()
 		if route.Options != nil {
-			loadOptions(config, route.Options)
+			err = loadOptions(config, route.Options)
+		}
+		if err != nil {
+			return nil, errorf("Route options is invalid. %v", err)
 		}
 
 		producer, err = sarama.NewAsyncProducer(brokers, config)

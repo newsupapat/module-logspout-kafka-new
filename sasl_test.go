@@ -45,6 +45,7 @@ func Test_load_sasl_scram_sha512_options(t *testing.T) {
 	config := newConfig()
 	options := map[string]string{
 		"security.protocol": "SASL_PLAINTEXT",
+		"sasl.version":      "1",
 		"sasl.mechanism":    sarama.SASLTypeSCRAMSHA512,
 		"sasl.user":         "tutorial-producer",
 		"sasl.password":     "tutorial-producer-password",
