@@ -48,10 +48,7 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 	var producer sarama.AsyncProducer
 	for i := 0; i < retries; i++ {
 		config := newConfig()
-		if route.Options != nil {
-			err = loadOptions(config, route.Options)
-		}
-		if err != nil {
+		if err = loadOptions(config, route.Options); err != nil {
 			return nil, errorf("Route options is invalid. %v", err)
 		}
 
@@ -206,4 +203,16 @@ type DockerInfo struct {
 	Image    string            `json:"image"`
 	Hostname string            `json:"hostname"`
 	Labels   map[string]string `json:"labels"`
+}
+
+func loadOptions(config *sarama.Config, options map[string]string) error {
+	if os.Getenv("DEBUG") != "" {
+		log.Println("Load options")
+	}
+
+	if protocol, ok := options["security.protocol"]; ok && protocol == "SASL_PLAINTEXT" {
+		return loadSASLOptions(config, options)
+	}
+
+	return nil
 }

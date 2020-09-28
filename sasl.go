@@ -1,20 +1,18 @@
 package kafka
 
 import (
+	"log"
+	"os"
 	"strconv"
 
 	"github.com/Shopify/sarama"
 )
 
-func loadOptions(config *sarama.Config, options map[string]string) error {
-	if protocol, ok := options["security.protocol"]; ok && protocol == "SASL_PLAINTEXT" {
-		return loadSASLOptions(config, options)
+func loadSASLOptions(config *sarama.Config, options map[string]string) error {
+	if os.Getenv("DEBUG") != "" {
+		log.Println("Enabled SASL PLAINTEXT")
 	}
 
-	return nil
-}
-
-func loadSASLOptions(config *sarama.Config, options map[string]string) error {
 	config.Metadata.Full = true
 	config.Net.SASL.Enable = true
 	config.Net.SASL.Handshake = true
