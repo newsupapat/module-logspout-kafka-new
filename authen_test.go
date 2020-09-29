@@ -7,7 +7,8 @@ import (
 	"github.com/Shopify/sarama"
 )
 
-func Test_load_sasl_scram_sha256_options(t *testing.T) {
+func Test_load_SASL_SCRAM_SHA256(t *testing.T) {
+	os.Setenv("DEBUG", "1")
 	os.Setenv("KAFKA_COMPRESSION_CODEC", "gzip")
 	config := newConfig()
 	options := map[string]string{
@@ -17,7 +18,10 @@ func Test_load_sasl_scram_sha256_options(t *testing.T) {
 		"sasl.password":     "tutorial-producer-password",
 	}
 
-	loadOptions(config, options)
+	authen := NewSASLAuthentication(options)
+	if err := authen.SetConfig(config); err != nil {
+		t.Error(err)
+	}
 
 	if !config.Net.SASL.Enable {
 		t.Error("SASL option be not enabled")
@@ -40,18 +44,21 @@ func Test_load_sasl_scram_sha256_options(t *testing.T) {
 	}
 }
 
-func Test_load_sasl_scram_sha512_options(t *testing.T) {
-	os.Setenv("KAFKA_COMPRESSION_CODEC", "snappy")
+func Test_load_SASL_SCRAM_SHA512(t *testing.T) {
+	os.Setenv("DEBUG", "1")
+	os.Setenv("KAFKA_COMPRESSION_CODEC", "gzip")
 	config := newConfig()
 	options := map[string]string{
 		"security.protocol": "SASL_PLAINTEXT",
-		"sasl.version":      "1",
 		"sasl.mechanism":    sarama.SASLTypeSCRAMSHA512,
 		"sasl.user":         "tutorial-producer",
 		"sasl.password":     "tutorial-producer-password",
 	}
 
-	loadOptions(config, options)
+	authen := NewSASLAuthentication(options)
+	if err := authen.SetConfig(config); err != nil {
+		t.Error(err)
+	}
 
 	if !config.Net.SASL.Enable {
 		t.Error("SASL option be not enabled")
@@ -71,5 +78,23 @@ func Test_load_sasl_scram_sha512_options(t *testing.T) {
 
 	if scramClient := config.Net.SASL.SCRAMClientGeneratorFunc(); scramClient == nil {
 		t.Error("SASL's SCRAM client generator function be no work!")
+	}
+}
+
+func Test_catch_SASL_version_invalid(t *testing.T) {
+	os.Setenv("DEBUG", "1")
+	os.Setenv("KAFKA_COMPRESSION_CODEC", "gzip")
+	config := newConfig()
+	options := map[string]string{
+		"security.protocol": "SASL_PLAINTEXT",
+		"sasl.version":      "1.0.0",
+		"sasl.mechanism":    sarama.SASLTypeSCRAMSHA512,
+		"sasl.user":         "tutorial-producer",
+		"sasl.password":     "tutorial-producer-password",
+	}
+
+	authen := NewSASLAuthentication(options)
+	if err := authen.SetConfig(config); err == nil {
+		t.Error("Fail return error when options pass invalid SASL version")
 	}
 }

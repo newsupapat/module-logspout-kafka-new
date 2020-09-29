@@ -62,6 +62,7 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 			}
 		} else {
 			time.Sleep(1 * time.Second)
+			break
 		}
 	}
 
@@ -210,9 +211,12 @@ func loadOptions(config *sarama.Config, options map[string]string) error {
 		log.Println("Load options")
 	}
 
-	if protocol, ok := options["security.protocol"]; ok && protocol == "SASL_PLAINTEXT" {
-		return loadSASLOptions(config, options)
+	var err error
+
+	if security, found := options["security.protocol"]; found && security == "SASL_PLAINTEXT" {
+		authen := NewSASLAuthentication(options)
+		err = authen.SetConfig(config)
 	}
 
-	return nil
+	return err
 }
