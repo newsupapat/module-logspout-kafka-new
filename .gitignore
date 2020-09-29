@@ -1,2 +1,5 @@
 Dockerfile
 modules.go
+vendor
+coverage.out
+coverage.html

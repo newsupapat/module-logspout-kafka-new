@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/gliderlabs/logspout/router"
-	sarama "gopkg.in/Shopify/sarama.v1"
 )
 
 func init() {
@@ -47,7 +47,12 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 	}
 	var producer sarama.AsyncProducer
 	for i := 0; i < retries; i++ {
-		producer, err = sarama.NewAsyncProducer(brokers, newConfig())
+		config := newConfig()
+		if err = loadOptions(config, route.Options); err != nil {
+			return nil, errorf("Route options is invalid. %v", err)
+		}
+
+		producer, err = sarama.NewAsyncProducer(brokers, config)
 		if err != nil {
 			if os.Getenv("DEBUG") != "" {
 				log.Println("Couldn't create Kafka producer. Retrying...", err)
@@ -57,6 +62,7 @@ func NewKafkaAdapter(route *router.Route) (router.LogAdapter, error) {
 			}
 		} else {
 			time.Sleep(1 * time.Second)
+			break
 		}
 	}
 
@@ -198,4 +204,19 @@ type DockerInfo struct {
 	Image    string            `json:"image"`
 	Hostname string            `json:"hostname"`
 	Labels   map[string]string `json:"labels"`
+}
+
+func loadOptions(config *sarama.Config, options map[string]string) error {
+	if os.Getenv("DEBUG") != "" {
+		log.Println("Load options")
+	}
+
+	var err error
+
+	if security, found := options["security.protocol"]; found && security == "SASL_PLAINTEXT" {
+		authen := NewSASLAuthentication(options)
+		err = authen.SetConfig(config)
+	}
+
+	return err
 }
