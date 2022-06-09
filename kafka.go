@@ -106,11 +106,18 @@ func (a *KafkaAdapter) Stream(logstream chan *router.Message) {
 }
 
 func newConfig() *sarama.Config {
+
+	var flushMs int
+	flushMs, err = strconv.Atoi(os.Getenv("KAFKA_FLUSH_MS"))
+	if err != nil {
+		flushMs = 1000
+	}
+
 	config := sarama.NewConfig()
 	config.ClientID = "logspout"
 	config.Producer.Return.Errors = false
 	config.Producer.Return.Successes = false
-	config.Producer.Flush.Frequency = 1 * time.Second
+	config.Producer.Flush.Frequency = flushMs * time.Millisecond
 	config.Producer.RequiredAcks = sarama.WaitForLocal
 
 	if opt := os.Getenv("KAFKA_COMPRESSION_CODEC"); opt != "" {
