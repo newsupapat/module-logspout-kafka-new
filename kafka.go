@@ -119,6 +119,7 @@ func newConfig() *sarama.Config {
 	config.Producer.Return.Successes = false
 	config.Producer.Flush.Frequency = flushMs * time.Millisecond
 	config.Producer.RequiredAcks = sarama.WaitForLocal
+	config.Version = sarama.V3_0_0_0
 
 	if opt := os.Getenv("KAFKA_COMPRESSION_CODEC"); opt != "" {
 		switch opt {
