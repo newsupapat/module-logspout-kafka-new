@@ -1,9 +1,9 @@
 module github.com/newsupapat/logspout-kafka-module
 
-go 1.16
+go 1.15
 
 require (
-	github.com/Shopify/sarama v1.31.1
+	github.com/Shopify/sarama v1.27.0
 	github.com/fsouza/go-dockerclient v1.6.5 // indirect
 	github.com/gliderlabs/logspout v3.2.6+incompatible
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
