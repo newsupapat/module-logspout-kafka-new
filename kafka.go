@@ -107,11 +107,7 @@ func (a *KafkaAdapter) Stream(logstream chan *router.Message) {
 
 func newConfig() *sarama.Config {
 
-	var flushMs int
-	flushMs, err = strconv.Atoi(os.Getenv("KAFKA_FLUSH_MS"))
-	if err != nil {
-		flushMs = 1000
-	}
+	var flushMs int = 1000
 
 	config := sarama.NewConfig()
 	config.ClientID = "logspout"
