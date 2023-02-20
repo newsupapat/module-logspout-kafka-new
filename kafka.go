@@ -117,7 +117,7 @@ func newConfig() *sarama.Config {
 	config.ClientID = "logspout"
 	config.Producer.Return.Errors = false
 	config.Producer.Return.Successes = false
-	config.Producer.Flush.Frequency = flushMs * time.Millisecond
+	config.Producer.Flush.Frequency = time.Duration(flushMs) * time.Millisecond
 	config.Producer.RequiredAcks = sarama.WaitForLocal
 	config.Version = sarama.V3_0_0_0
 
