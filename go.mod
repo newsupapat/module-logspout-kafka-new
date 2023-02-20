@@ -1,4 +1,4 @@
-module github.com/domehuhu/logspout-kafka
+module github.com/newsupapat/logspout-kafka-module
 
 go 1.15
 
