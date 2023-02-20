@@ -1,6 +1,6 @@
 module github.com/newsupapat/logspout-kafka-module
 
-go 1.15
+go 1.16
 
 require (
 	github.com/Shopify/sarama v1.31.1
